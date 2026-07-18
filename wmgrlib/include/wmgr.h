@@ -22,79 +22,11 @@ extern "C" {
 #endif
 
 #include "wmgr_vect.h"
-
-#define DEFAULT_INDEX_HTMW "<@include_once \"config.htmw\">\n\
-<!DOCTYPE html>\n\
-<html lang=\"en\">\n\
-<head/>\n\
-<content>\n\
-    <h1>Hello and welcome to <PrettyText><@{ APP.name }></PrettyText></h1>\n\
-    <p>It works!</p>\n\
-</content>\n\
-</html>"
-
-#define DEFAULT_CONFIG_HTMW "<@ntxt>\n\
-<@area \"config\">\n\
-\n\
-<@ -> {\n\
-    APP = {\n\
-        name = \"%s\"\n\
-    }\n\
-}>\n\
-\n\
-<@template head(){}><#head>\n\
-    <meta charset=\"UTF-8\">\n\
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
-    <title><@{ APP.name }></title>\n\
-    <link rel=\"stylesheet\" href=\"style.css\">$INNER\n\
-</#head></@template>\n\
-\n\
-<@template content(){}><body><@include \"header.htmw\"><main class=\"content-pad\">$INNER</main></body></@template>\n\
-\n\
-</@area>\n\
-\n\
-</@ntxt>"
-
-#define DEFAULT_HEADER_HTMW "<@include_once \"config.htmw\">\n<div style=\"width: 100%; height: 64px; background-color: black; padding: 10px; position: fixed; top: 0px; display: flex; align-items: center;\">\n\
-    <span style=\"font-size: 25px; font-weight: bold; color: white;\"><@{ APP.name }></span>\n\
-</div>\n\
-<div style=\"height: 64px;\"></div>"
-
-#define DEFAULT_STYLE_CSS "html, body {\n\
-    font-family: Arial, Helvetica, sans-serif;\n\
-    margin: 0px;\n\
-}\n\
-\n\
-div {\n\
-    box-sizing: border-box;\n\
-}\n\
-\n\
-.content-pad {\n\
-    max-width: 900px;\n\
-    padding: 0px 10px;\n\
-    margin: 0 auto;\n\
-}"
-
-#define DEFAULT_MAKE_TXT "cc: %s;\n\
-\n\
-mod:\n\
-    ;\n\
-\n\
-target:\n\
-    index#html\n\
-    style.css;\n\
-\n\
-assets:\n\
-    assets>assets;\n\
-\n\
-out: out;\n\
-src: src;\n\
-build: build;\n\
-dependencies: dependencies;"
+#include "wmgr_boilerplate.h"
 
 #define WMGR_VER_MAJOR 0
 #define WMGR_VER_MINOR 2
-#define WMGR_VER_PATCH 0
+#define WMGR_VER_PATCH 1
 
 #define WMGR_STRINGIFY(x) #x
 #define WMGR_TOSTRING(x) WMGR_STRINGIFY(x)

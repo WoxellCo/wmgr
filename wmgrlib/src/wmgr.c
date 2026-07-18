@@ -7,7 +7,9 @@
  */
 
 #include "wmgr.h"
+#include "wmgr_boilerplate.h"
 #include "wmgr_vect.h"
+#include <stddef.h>
 
 wmgr_def_vect_push_back(1, char *);
 wmgr_def_vect_push_back(2, element_t);
@@ -70,7 +72,7 @@ int parse_wmgr_elements(wmgr_element_vect *section_elements, char *begin, size_t
     //element_t *e = NULL;
     element_t e;
 
-    u_int8_t phase = 0;
+    uint8_t phase = 0;
     char c;
     size_t last_begin = 0;
     for (size_t i = 0; i < length; i++) {
@@ -425,7 +427,29 @@ void make_out(make_t m) {
     free(out);
 }
 
+uint8_t wmgr_is_valid_name(const char *name) {
+    const char *p = name;
+    for (char c = *p; *p != '\0'; p++) {
+        switch (c) {
+            case '_':
+            case '-':
+            case '.':
+                if (p == name)
+                    return 0;
+                continue;
+            default:
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))
+                    continue;
+                else
+                    return 0;
+        }
+    }
+    return 1;
+}
+
 void create_xmw_project(const char *name) {
+    if (!wmgr_is_valid_name(name))
+        fatal("invalid project name: allowed characters [a-z, A-Z, 0-9] and [_, -, .] (the latter cannot be the first character)");
     size_t name_len = strlen(name);
     char *buffer = (char*)malloc((name_len + 64) * sizeof(char));
     FILE *f = NULL;
@@ -439,33 +463,62 @@ void create_xmw_project(const char *name) {
     create_folder(buffer);
     sprintf(buffer, "%s/dependencies", name);
     create_folder(buffer);
+    sprintf(buffer, "%s/src/templates", name);
+    create_folder(buffer);
+    sprintf(buffer, "%s/src/configs", name);
+    create_folder(buffer);
+    sprintf(buffer, "%s/src/templates/page_structure", name);
+    create_folder(buffer);
+    sprintf(buffer, "%s/src/templates/pretty", name);
+    create_folder(buffer);
 
     sprintf(buffer, "%s/src/%s", name, "index.htmw");
     f = fopen(buffer, "w");
     if (f == NULL)
         fatal("An error has occurred (A1)");
-    fprintf(f, "%s", DEFAULT_INDEX_HTMW);
+    fprintf(f, "%s", WMGR_BOILERPLATE_DEFAULT_INDEX_HTMW);
     fclose(f);
 
-    sprintf(buffer, "%s/src/%s", name, "config.htmw");
+    sprintf(buffer, "%s/src/configs/%s", name, "config.htmw");
     f = fopen(buffer, "w");
     if (f == NULL)
         fatal("An error has occurred (A2)");
-    fprintf(f, DEFAULT_CONFIG_HTMW, name);
+    fprintf(f, WMGR_BOILERPLATE_DEFAULT_CONFIG_HTMW, name);
     fclose(f);
 
-    sprintf(buffer, "%s/src/%s", name, "header.htmw");
+    sprintf(buffer, "%s/src/configs/%s", name, "header.htmw");
     f = fopen(buffer, "w");
     if (f == NULL)
         fatal("An error has occurred (A3)");
-    fprintf(f, "%s", DEFAULT_HEADER_HTMW);
+    fprintf(f, "%s", WMGR_BOILERPLATE_DEFAULT_HEADER_HTMW);
     fclose(f);
 
     sprintf(buffer, "%s/src/%s", name, "style.css");
     f = fopen(buffer, "w");
     if (f == NULL)
         fatal("An error has occurred (A4)");
-    fprintf(f, "%s", DEFAULT_STYLE_CSS);
+    fprintf(f, "%s", WMGR_BOILERPLATE_DEFAULT_STYLE_CSS);
+    fclose(f);
+
+    sprintf(buffer, "%s/src/%s", name, "i.htmw");
+    f = fopen(buffer, "w");
+    if (f == NULL)
+        fatal("An error has occurred (A5)");
+    fprintf(f, "%s", WMGR_BOILERPLATE_DEFAULT_I_HTMW);
+    fclose(f);
+
+    sprintf(buffer, "%s/src/templates/page_structure/%s", name, "Page.htmw");
+    f = fopen(buffer, "w");
+    if (f == NULL)
+        fatal("An error has occurred (A6)");
+    fprintf(f, "%s", WMGR_BOILERPLATE_DEFAULT_PAGE_HTMW);
+    fclose(f);
+
+    sprintf(buffer, "%s/src/templates/pretty/%s", name, "Text.htmw");
+    f = fopen(buffer, "w");
+    if (f == NULL)
+        fatal("An error has occurred (A7)");
+    fprintf(f, "%s", WMGR_BOILERPLATE_DEFAULT_PRETTYTEXT_HTMW);
     fclose(f);
 
     #if defined(__unix__)
@@ -486,7 +539,7 @@ void create_xmw_project(const char *name) {
     f = fopen(buffer, "w");
     if (f == NULL)
         fatal("An error has occurred (A4)");
-    fprintf(f, DEFAULT_MAKE_TXT, COMMAND_HTMW);
+    fprintf(f, WMGR_BOILERPLATE_DEFAULT_MAKE_TXT, COMMAND_HTMW);
     fclose(f);
 
     free(buffer);
