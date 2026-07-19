@@ -18,7 +18,7 @@ int create_folder(const char *path) {
     #if defined(__unix__)
     return mkdir(path, 0777);
     #elif defined(_WIN32)
-
+    return CreateDirectory(path, NULL);
     #endif
 }
 
@@ -344,21 +344,7 @@ void make_out(make_t m) {
         );
     }
     len += sprintf(out + len, "cd %s\n\n", m.src);
-    #if 0
-    list_node *ln;
-    ln = m.targets->head;
-    while (ln != NULL) {
-        element_t *e = (element_t *)ln->data;
-
-        if (e->format != NULL) {
-            len += sprintf(out + len, "%s %s -f %s\n",
-                m.cc, e->obj, e->format
-            );
-        }
-
-        ln = ln->next;
-    }
-    #endif
+    
     wmgr_vect_foreach(element_t, v, i, m.targets) {
         if (v.format != NULL) {
             len += sprintf(out + len, "%s %s -f %s\n",
@@ -366,22 +352,8 @@ void make_out(make_t m) {
             );
         }
     }
-
     out[len++] = '\n';
-    #if 0
-    ln = m.targets->head;
-    while (ln != NULL) {
-        element_t *e = (element_t *)ln->data;
-
-        if (e->format != NULL) {
-            len += sprintf(out + len, "mv %s.%s ../%s/%s.%s\n",
-                e->obj, e->format, m.out, e->obj, e->format
-            );
-        }
-
-        ln = ln->next;
-    }
-    #endif
+    
     wmgr_vect_foreach(element_t, v, i, m.targets) {
         if (v.format != NULL) {
             len += sprintf(out + len, "mv %s.%s ../%s/%s.%s\n",
@@ -389,21 +361,7 @@ void make_out(make_t m) {
             );
         }
     }
-        
-    #if 0
-    ln = m.targets->head;
-    while (ln != NULL) {
-        element_t *e = (element_t *)ln->data;
 
-        if (e->format == NULL) {
-            len += sprintf(out + len, "cp %s ../%s/%s\n",
-                e->obj, m.out, e->obj
-            );
-        }
-
-        ln = ln->next;
-    }
-    #endif
     wmgr_vect_foreach(element_t, v, i, m.targets) {
         if (v.format == NULL) {
             len += sprintf(out + len, "cp %s ../%s/%s\n",
@@ -421,7 +379,47 @@ void make_out(make_t m) {
     fprintf(f, "%s", out);
     fclose(f);
     #elif defined(_WIN32)
+    if (m.assets[0] != NULL) {
+        len += sprintf(out, "rd /s /q \"%s/%s\"\nrobocopy \"%s\" \"%s/%s\" /E\n\n",
+            m.out, m.assets[1] != NULL ? m.assets[1] : m.assets[0],
+            m.assets[0], m.out, m.assets[1] != NULL ? m.assets[1] : m.assets[0]
+        );
+    }
+    len += sprintf(out + len, "cd \"%s\"\n\n", m.src);
+    
+    wmgr_vect_foreach(element_t, v, i, m.targets) {
+        if (v.format != NULL) {
+            len += sprintf(out + len, "%s %s -f %s\n",
+                m.cc, v.obj, v.format
+            );
+        }
+    }
+    out[len++] = '\n';
+    
+    wmgr_vect_foreach(element_t, v, i, m.targets) {
+        if (v.format != NULL) {
+            len += sprintf(out + len, "move \"%s.%s\" \"../%s/%s.%s\"\n",
+                v.obj, v.format, m.out, v.obj, v.format
+            );
+        }
+    }
+    
+    wmgr_vect_foreach(element_t, v, i, m.targets) {
+        if (v.format == NULL) {
+            len += sprintf(out + len, "copy \"%s\" \"../%s/%s\"\n",
+                v.obj, m.out, v.obj
+            );
+        }
+    }
 
+    out[len] = '\0';
+
+    char out_path[2048];
+    strcpy(out_path, m.build);
+    strcat(out_path, ".bat");
+    FILE *f = fopen(out_path, "w");
+    fprintf(f, "%s", out);
+    fclose(f);
     #endif
 
     free(out);
@@ -532,6 +530,7 @@ void create_xmw_project(const char *name) {
     #if defined(__unix__)
     fprintf(f, "rm -rf out/assets\ncp -r assets out/assets\n\ncd src\n\n%s index -f html\n\nmv index.html ../out/index.html\ncp style.css ../out/style.css", COMMAND_HTMW);
     #elif defined(_WIN32)
+    fprintf(f, "rd /s /q \"out/assets\"\nrobocopy \"assets\" \"out/assets\" /E\n\ncd \"src\"\n\n%s index -f html\n\nmove \"index.html\" \"../out/index.html\"\ncopy \"style.css\" \"../out/style.css\"", COMMAND_HTMW);
     #endif
     fclose(f);
 

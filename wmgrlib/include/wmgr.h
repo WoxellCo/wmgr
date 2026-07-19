@@ -25,8 +25,8 @@ extern "C" {
 #include "wmgr_boilerplate.h"
 
 #define WMGR_VER_MAJOR 0
-#define WMGR_VER_MINOR 2
-#define WMGR_VER_PATCH 1
+#define WMGR_VER_MINOR 3
+#define WMGR_VER_PATCH 0
 
 #define WMGR_STRINGIFY(x) #x
 #define WMGR_TOSTRING(x) WMGR_STRINGIFY(x)
@@ -40,12 +40,6 @@ extern "C" {
 #define COMMAND_HTMW "htmw"
 
 static const uint32_t WMGR_VER[3] = { WMGR_VER_MAJOR, WMGR_VER_MINOR, WMGR_VER_PATCH };
-
-#ifdef _WIN32
-#error "WMGR is not currently supported on Windows"
-#endif
-
-
 
 typedef struct {
     char *obj;

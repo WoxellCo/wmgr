@@ -14,3 +14,6 @@ include_directories(include wmgrlib/include)
 add_executable(${PROJECT_NAME} main.c)
 
 target_link_libraries(${PROJECT_NAME} wmgrlib)
+
+# on windows you can build with MinGW with the following command
+# ` cmake -S . -B build -G "MinGW Makefiles"`
