@@ -23,6 +23,11 @@ extern "C" {
     #include <sys/stat.h>
 #elif defined(_WIN32)
     #include <windows.h>
+    #include <winSock2.h>
+    #include <ws2tcpip.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <io.h>
 #endif
 
 namespace wmgr {

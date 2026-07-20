@@ -1,4 +1,8 @@
 #include "wmgr_webserver.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <winSock2.h>
 
 const char *guess_content_type_from_path(const char *path, size_t path_max_character_limit) {
     size_t extension_idx = 0;
@@ -413,11 +417,229 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
         params.on_stop(WMGR_WEB_OK);
 }
 #elif defined(_WIN32)
+//#pragma comment(lib, "Ws2_32.lib")
+
 size_t serve_file(char **output, const char *host_path, const char *path, size_t path_max_character_limit) {
-    fatal("webserver uitily is not currently supported on windows");
+    size_t max_path_len = strlen(host_path) + path_max_character_limit;
+    char *full_path = (char *)malloc(max_path_len + 1);
+    if (full_path == NULL) {
+        *output = NULL;
+        return 0;
+    }
+    size_t tot_path_len = snprintf(full_path, max_path_len + 1, "%s%.*s", host_path, (int)path_max_character_limit, path);
+    FILE *f = NULL;
+    uint8_t retry = 0;
+    struct stat st;
+
+    if (full_path[tot_path_len - 1] == '/') {
+        full_path[tot_path_len - 1] = '\0';
+        tot_path_len--;
+    }
+
+    if (stat(full_path, &st) == 0) {
+        if (st.st_mode & _S_IFDIR) {
+            full_path = (char *)realloc(full_path, tot_path_len + 12); // tot_path_len + "/index.html" + '\0'
+            if (full_path == NULL) {
+                *output = NULL;
+                return 0;
+            }
+            strcpy(full_path + tot_path_len, full_path[tot_path_len - 1] == '/' ? "index.html" : "/index.html");
+            if (stat(full_path, &st) != 0) {
+                *output = NULL;
+                return 0;
+            }
+            if (st.st_mode & _S_IFDIR) {
+                *output = NULL;
+                return 0;
+            } else if (st.st_mode & _S_IFREG) {
+                
+            } else {
+                *output = NULL;
+                return 0;
+            }
+            f = fopen(full_path, "rb");
+        } else if (st.st_mode & _S_IFREG) {
+            f = fopen(full_path, "rb");
+        }
+    } // add else? it would return anyway cause it's null
+
+    //printf("fp: %s\n", full_path);
+
+    if (f == NULL) {
+        *output = NULL;
+        return 0;
+    }
+
+    size_t sz = fseek(f, 0L, SEEK_END);
+    sz = ftell(f);
+    rewind(f);
+
+    if (sz == -1) {
+        *output = NULL;
+        return 0;
+    }
+
+    //printf("sz: %zu\n", sz);
+
+    char *content = (char *)malloc((sz + 1) * sizeof(char));
+    if (content == NULL) {
+        *output = NULL;
+        return 0;
+    }
+
+    size_t length = 0;
+    content[0] = '\0';
+    while (fgets(content + (length = strlen(content)), sz, f)) {
+
+    }
+
+    fclose(f);
+    free(full_path);
+    *output = content;
+    return length;
 }
-void start_webserver(size_t port, const char *host_path, struct webserver_params params) {
-    fatal("webserver uitily is not currently supported on windows");
+
+void start_webserver(uint16_t port, const char *host_path, struct webserver_params params) {
+    int server_fd, client_socket;
+    struct sockaddr_in address;
+    socklen_t address_length = sizeof(address);
+
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        if (params.on_stop != NULL)
+            params.on_stop(WMGR_WEB_ERROR_INIT_FAIL);
+        return;
+    }
+
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+        if (params.on_stop != NULL)
+            params.on_stop(WMGR_WEB_ERROR_SOCKET);
+        return;
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+
+    BOOL opt = TRUE;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (const char *)&opt, sizeof(opt)) < 0) {
+        //int err = WSAGetLastError();
+        //printf("setsockopt failed, WSA error: %d\n", err);
+        closesocket(server_fd);
+        if (params.on_stop != NULL)
+            params.on_stop(WMGR_WEB_ERROR_SOCKETOPT);
+        return;
+    }
+
+    if (bind(server_fd, (struct sockaddr *)&address, address_length) < 0) {
+        closesocket(server_fd);
+        if (params.on_stop != NULL)
+            params.on_stop(WMGR_WEB_ERROR_BIND);
+        return;
+    }
+
+    if (listen(server_fd, 20) < 0) {
+        closesocket(server_fd);
+        if (params.on_stop != NULL)
+            params.on_stop(WMGR_WEB_ERROR_LISTEN);
+        return;
+    }
+
+    *params.status = 1;
+
+    params.on_start_success(port, host_path);
+
+    while (*params.status) {
+        if ((client_socket = accept(server_fd, (struct sockaddr *)&address, &address_length)) < 0) {
+            if (params.on_connect_error != NULL)
+                params.on_connect_error();
+            continue;
+        }
+
+        char raw_req[2048] = "";
+
+        int read_size = recv(client_socket, raw_req, 2048 - 1, 0);
+        if (read_size <= 0) {
+            closesocket(client_socket);
+            if (params.on_connect_error != NULL)
+                params.on_connect_error();
+            continue;
+        }
+        raw_req[read_size] = '\0';
+
+        char *response = NULL;
+
+        struct webserver_request req;
+        uint8_t req_err = 0;
+
+        if (!parse_webserver_http_request(&req, raw_req)) {
+            if (params.on_connect_error != NULL)
+                response = params.on_connect_error();
+            req_err = 1;
+        }
+
+        //printf("%s\n", raw_req);
+        //printf("|%.*s| |%.*s|\n", (int)req.method_length, req.method, (int)req.path_length, req.path);
+        //printf("req_err: %u\n", req_err);
+        //printf("(%zu; %zu)\n", req.method_length, req.path_length);
+        
+        if (!req_err) {
+            if (response == NULL && params.on_connect != NULL)
+                response = params.on_connect(&req);
+
+            if (response == NULL) {
+                // default case (serve file)
+                char *content;
+                size_t len = serve_file(&content, host_path, req.path, req.path_length);
+                
+                if (content != NULL) {
+                    response = (char *)malloc((len + 1 + 128) * sizeof(char));
+                    if (response == NULL) {
+                        closesocket(client_socket);
+                        closesocket(server_fd);
+                        params.on_stop(WMGR_WEB_ERROR_ALLOC_FAIL);
+                        return;
+                    }
+
+                    snprintf(response, len + 1 + 128,
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Type: %s;\r\n"
+                        "Content-Length: %zu\r\n"
+                        "\r\n"
+                        "%s",
+                        guess_content_type_from_path(req.path, req.path_length),
+                        len,
+                        content
+                    );
+                } else {
+                    response = (char *)malloc(2048);
+                    if (response == NULL) {
+                        closesocket(client_socket);
+                        closesocket(server_fd);
+                        params.on_stop(WMGR_WEB_ERROR_ALLOC_FAIL);
+                        return;
+                    }
+
+                    snprintf(response, 2048,
+                        "HTTP/1.1 404 Not Found\r\n"
+                        "Content-Type: text/plain;\r\n"
+                        "Content-Length: %zu\r\n"
+                        "\r\n"
+                        "%s",
+                        strlen(WMGR_WEB_NOT_FOUND_BODY_RESP),
+                        WMGR_WEB_NOT_FOUND_BODY_RESP
+                    );
+                }
+            }
+        } else puts("err!"); // unhandled error?
+
+        int bytes_sent = send(client_socket, response, strlen(response), 0);
+        closesocket(client_socket);
+        free(response);
+    }
+    closesocket(server_fd);
+    if (params.on_stop != NULL)
+        params.on_stop(WMGR_WEB_OK);
 }
 #else
     #error "unsupported platform"

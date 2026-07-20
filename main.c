@@ -11,7 +11,7 @@ void on_stop(int code) {
     if (code == WMGR_WEB_OK) {
         printf("Server stopped\n");
     } else {
-        printf("An error occurred, server stopped\n");
+        printf("An error occurred, server stopped (%d)\n", code);
     }
 }
 

@@ -1,15 +1,14 @@
 # wmgr
 WMGR is a minimal and lightweight project manager for HTMW.
-ISO C99 compliant.
+uses ISO C99 + POSIX or WinAPI (depending on the platform).
 
-current version: 0.4.0
+current version: 0.4.1
 
 WARNING! I know there are memory leaks and incomplete features, but I'm still testing it!
 
-WARNING! WMGR is not currently supported on Windows
-
 ## what's new (0.4.x)
 + added a test environment webserver
++ test environment webserver is now supported on Windows (0.4.1)
 
 ## what's new (0.3.x)
 + added support for Windows

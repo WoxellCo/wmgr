@@ -13,3 +13,7 @@ add_library(${PROJECT_NAME} STATIC
 )
 
 include_directories(include)
+
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} wsock32 ws2_32)
+endif()

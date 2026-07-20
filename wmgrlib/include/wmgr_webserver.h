@@ -12,8 +12,13 @@
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <sys/stat.h>
-#else
-
+#elif defined(_WIN32)
+    #include <windows.h>
+    #include <winSock2.h>
+    #include <wS2tcpip.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <io.h>
 #endif
 #endif
 
@@ -27,6 +32,7 @@ extern "c" {
 #define WMGR_WEB_ERROR_LISTEN       -3
 #define WMGR_WEB_ERROR_SOCKETOPT    -4
 #define WMGR_WEB_ERROR_ALLOC_FAIL   -5
+#define WMGR_WEB_ERROR_INIT_FAIL    -6
 
 struct webserver_request {
     char *data;
