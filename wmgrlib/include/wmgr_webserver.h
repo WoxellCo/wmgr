@@ -46,8 +46,8 @@ struct webserver_request {
 struct webserver_params {
     void(*on_start_success)(uint16_t port, const char *host_path);
     void(*on_stop)(int code);
-    char *(*on_connect)(struct webserver_request *);
-    char *(*on_connect_error)();
+    size_t(*on_connect)(char **output, struct webserver_request *);
+    size_t(*on_connect_error)(char **output);
     uint8_t *status;
 };
 

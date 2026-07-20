@@ -1,5 +1,5 @@
 /**
- * (c) WMGR v0.4.1 for HTMW by Woxell.co
+ * (c) WMGR v0.4.2 for HTMW by Woxell.co
  * 
  * [WARNING]
  * The current version is a test version, it's unstable and there are known memory leaks and unhandled errors.

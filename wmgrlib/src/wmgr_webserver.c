@@ -1,8 +1,4 @@
 #include "wmgr_webserver.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <winSock2.h>
 
 const char *guess_content_type_from_path(const char *path, size_t path_max_character_limit) {
     size_t extension_idx = 0;
@@ -271,9 +267,7 @@ size_t serve_file(char **output, const char *host_path, const char *path, size_t
 
     size_t length = 0;
     content[0] = '\0';
-    while (fgets(content + (length = strlen(content)), sz, f)) {
-
-    }
+    length = fread(content, 1, sz, f);
 
     fclose(f);
     free(full_path);
@@ -327,29 +321,30 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
     while (*params.status) {
         if ((client_socket = accept(server_fd, (struct sockaddr *)&address, &address_length)) < 0) {
             if (params.on_connect_error != NULL)
-                params.on_connect_error();
+                params.on_connect_error(NULL);
             continue;
         }
 
         char raw_req[2048] = "";
 
+        char *response = NULL;
+        size_t n_bytes = 0;
+
         ssize_t read_size = read(client_socket, raw_req, 2048 - 1);
         if (read_size <= 0) {
             close(client_socket);
             if (params.on_connect_error != NULL)
-                params.on_connect_error();
+                n_bytes = params.on_connect_error(&response);
             continue;
         }
         raw_req[read_size] = '\0';
-
-        char *response = NULL;
 
         struct webserver_request req;
         uint8_t req_err = 0;
 
         if (!parse_webserver_http_request(&req, raw_req)) {
             if (params.on_connect_error != NULL)
-                response = params.on_connect_error();
+                n_bytes = params.on_connect_error(&response);
             req_err = 1;
         }
 
@@ -360,7 +355,7 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
         
         if (!req_err) {
             if (response == NULL && params.on_connect != NULL)
-                response = params.on_connect(&req);
+                n_bytes = params.on_connect(&response, &req);
 
             if (response == NULL) {
                 // default case (serve file)
@@ -376,16 +371,18 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
                         return;
                     }
 
-                    snprintf(response, len + 1 + 128,
+                    size_t header_len = snprintf(response, len + 1 + 128,
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Type: %s;\r\n"
                         "Content-Length: %zu\r\n"
-                        "\r\n"
-                        "%s",
+                        "\r\n",
                         guess_content_type_from_path(req.path, req.path_length),
-                        len,
-                        content
+                        len
                     );
+
+                    memcpy(response + header_len, content, len);
+
+                    n_bytes = header_len + len;
                 } else {
                     response = (char *)malloc(2048);
                     if (response == NULL) {
@@ -408,7 +405,7 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
             }
         } else puts("err!"); // unhandled error?
 
-        write(client_socket, response, strlen(response));
+        write(client_socket, response, n_bytes);
         close(client_socket);
         free(response);
     }
