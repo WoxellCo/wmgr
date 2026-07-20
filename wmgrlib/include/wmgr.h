@@ -25,7 +25,7 @@ extern "C" {
 #include "wmgr_boilerplate.h"
 
 #define WMGR_VER_MAJOR 0
-#define WMGR_VER_MINOR 3
+#define WMGR_VER_MINOR 4
 #define WMGR_VER_PATCH 0
 
 #define WMGR_STRINGIFY(x) #x

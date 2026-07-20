@@ -10,10 +10,17 @@ extern "C" {
 #include <cstddef>
 #include <cstdint>
 #include <cstddef>
+#include <cctype>
 
 #if defined(__unix__)
     #include <sys/stat.h>
     #include <sys/types.h>
+
+    #include <unistd.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+
+    #include <sys/stat.h>
 #elif defined(_WIN32)
     #include <windows.h>
 #endif

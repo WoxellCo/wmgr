@@ -1,5 +1,5 @@
 /**
- * (c) WMGR v0.2.0 for HTMW by Woxell.co
+ * (c) WMGR v0.3.1 for HTMW by Woxell.co
  * 
  * [WARNING]
  * The current version is a test version, it's unstable and there are known memory leaks and unhandled errors.
@@ -551,5 +551,6 @@ void wmgr_print_row(const char *cmd, const char *desc) {
 void wmgr_print_actions() {
     wmgr_print_row("make", "Reads `make.txt` file and generates a shell/batch script to build your project");
     wmgr_print_row("new <name>", "Creates a new project in a named folder");
+    wmgr_print_row("test", "Hosts a local test environment");
     wmgr_print_row("ver", "Displays the installed WMGR version");
 }
