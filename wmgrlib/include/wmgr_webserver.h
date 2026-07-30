@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
     #include <unistd.h>
     #include <sys/socket.h>
     #include <netinet/in.h>

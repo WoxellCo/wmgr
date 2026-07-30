@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 #ifndef __cplusplus
-    #if defined(__unix__)
+    #if defined(__unix__) || defined(__APPLE__)
         #include <sys/stat.h>
         #include <sys/types.h>
     #elif defined(_WIN32)
@@ -26,7 +26,7 @@ extern "C" {
 
 #define WMGR_VER_MAJOR 0
 #define WMGR_VER_MINOR 4
-#define WMGR_VER_PATCH 2
+#define WMGR_VER_PATCH 3
 
 #define WMGR_STRINGIFY(x) #x
 #define WMGR_TOSTRING(x) WMGR_STRINGIFY(x)

@@ -15,7 +15,7 @@ wmgr_def_vect_push_back(1, char *);
 wmgr_def_vect_push_back(2, element_t);
 
 int create_folder(const char *path) {
-    #if defined(__unix__)
+    #if defined(__unix__) || defined(__APPLE__)
     return mkdir(path, 0777);
     #elif defined(_WIN32)
     return CreateDirectory(path, NULL);
@@ -336,7 +336,7 @@ void make_out(make_t m) {
     char *out = (char *)malloc(1E7 * sizeof(char));
     size_t len = 0;
 
-    #if defined(__unix__)
+    #if defined(__unix__) || defined(__APPLE__)
     if (m.assets[0] != NULL) {
         len += sprintf(out, "rm -rf %s/%s\ncp -r %s %s/%s\n\n",
             m.out, m.assets[1] != NULL ? m.assets[1] : m.assets[0],

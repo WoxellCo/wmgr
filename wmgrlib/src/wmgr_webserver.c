@@ -196,7 +196,7 @@ uint8_t parse_webserver_http_request(struct webserver_request *dest, char *input
     return dest->method != NULL && dest->path != NULL;
 }
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
 size_t serve_file(char **output, const char *host_path, const char *path, size_t path_max_character_limit) {
     size_t max_path_len = strlen(host_path) + path_max_character_limit;
     char *full_path = (char *)malloc(max_path_len + 1);
@@ -638,6 +638,8 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
     if (params.on_stop != NULL)
         params.on_stop(WMGR_WEB_OK);
 }
+//#elif defined(__APPLE__)
+    
 #else
     #error "unsupported platform"
 #endif
