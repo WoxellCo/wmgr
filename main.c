@@ -1,6 +1,6 @@
-#include "wmgr_webserver.h"
 #include <stdio.h>
 #include <wmgr.h>
+#include <wmgr_webserver.h>
 
 void on_start_success(uint16_t port, const char *host_path) {
     printf("\nTest environment successfully started:\nhttp://127.0.0.1:%u\n\n"

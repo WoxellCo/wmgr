@@ -549,29 +549,30 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
     while (*params.status) {
         if ((client_socket = accept(server_fd, (struct sockaddr *)&address, &address_length)) < 0) {
             if (params.on_connect_error != NULL)
-                params.on_connect_error();
+                params.on_connect_error(NULL);
             continue;
         }
 
         char raw_req[2048] = "";
 
+        char *response = NULL;
+        size_t n_bytes = 0;
+
         int read_size = recv(client_socket, raw_req, 2048 - 1, 0);
         if (read_size <= 0) {
             closesocket(client_socket);
             if (params.on_connect_error != NULL)
-                params.on_connect_error();
+                n_bytes = params.on_connect_error(&response);
             continue;
         }
         raw_req[read_size] = '\0';
-
-        char *response = NULL;
 
         struct webserver_request req;
         uint8_t req_err = 0;
 
         if (!parse_webserver_http_request(&req, raw_req)) {
             if (params.on_connect_error != NULL)
-                response = params.on_connect_error();
+                n_bytes = params.on_connect_error(&response);
             req_err = 1;
         }
 
@@ -582,7 +583,7 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
         
         if (!req_err) {
             if (response == NULL && params.on_connect != NULL)
-                response = params.on_connect(&req);
+                n_bytes = params.on_connect(&response, &req);
 
             if (response == NULL) {
                 // default case (serve file)
@@ -598,16 +599,18 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
                         return;
                     }
 
-                    snprintf(response, len + 1 + 128,
+                    size_t header_len = snprintf(response, len + 1 + 128,
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Type: %s;\r\n"
                         "Content-Length: %zu\r\n"
-                        "\r\n"
-                        "%s",
+                        "\r\n",
                         guess_content_type_from_path(req.path, req.path_length),
-                        len,
-                        content
+                        len
                     );
+
+                    memcpy(response + header_len, content, len);
+
+                    n_bytes = header_len + len;
                 } else {
                     response = (char *)malloc(2048);
                     if (response == NULL) {
@@ -630,7 +633,7 @@ void start_webserver(uint16_t port, const char *host_path, struct webserver_para
             }
         } else puts("err!"); // unhandled error?
 
-        int bytes_sent = send(client_socket, response, strlen(response), 0);
+        int bytes_sent = send(client_socket, response, n_bytes, 0);
         closesocket(client_socket);
         free(response);
     }
