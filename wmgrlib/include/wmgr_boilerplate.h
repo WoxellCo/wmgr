@@ -3,7 +3,7 @@
 
 #ifndef WMGR_BOILERPLATE_DEFAULT_INDEX_HTMW
 #define WMGR_BOILERPLATE_DEFAULT_INDEX_HTMW "<@include_once \"i.htmw\">\n\
-<Page title={ APP.name } lang=\"en\">\n\
+<Page title={APP.name} lang=\"en\">\n\
     <h1>Hello and welcome to <PrettyText><@{ APP.name }></PrettyText></h1>\n\
     <p>It works!</p>\n\
 </Page>"
@@ -19,7 +19,7 @@
     }\n\
 }>\n\
 \n\
-<@template content(){}><body><@include \"configs/header.htmw\"><main class=\"content-pad\">$INNER</main></body></@template>\n\
+<@template content(){}><@include \"configs/header.htmw\"><main class=\"content-pad\">$INNER</main></@template>\n\
 \n\
 </@area>\n\
 </@ntxt>"

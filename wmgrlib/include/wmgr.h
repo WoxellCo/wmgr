@@ -26,7 +26,7 @@ extern "C" {
 
 #define WMGR_VER_MAJOR 0
 #define WMGR_VER_MINOR 4
-#define WMGR_VER_PATCH 4
+#define WMGR_VER_PATCH 5
 
 #define WMGR_STRINGIFY(x) #x
 #define WMGR_TOSTRING(x) WMGR_STRINGIFY(x)
