@@ -2,7 +2,6 @@
 #define WMGR_HPP
 
 #ifdef __cplusplus
-extern "C" {
 
 #include <cstdio>
 #include <cstdlib>
@@ -31,10 +30,11 @@ extern "C" {
 #endif
 
 namespace wmgr {
-    #include <wmgr.h>
+    extern "C" {
+        #include <wmgr.h>
+    }
 }
 
-}
 #endif
 
 #endif
