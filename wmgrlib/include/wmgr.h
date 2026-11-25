@@ -69,7 +69,8 @@ typedef enum {
     ms_out,
     ms_src,
     ms_dependencies,
-    ms_build
+    ms_build,
+    ms_include
 } make_sect;
 
 typedef struct {
@@ -84,6 +85,7 @@ typedef struct {
     wmgr_element_vect targets;      // list >> <struct>
     //wmgr_cstring_vect mods;         // list >> char *
     wmgr_element_vect mods;      // list >> <struct>
+    wmgr_element_vect includes;      // list >> <struct>
     char *out;
     char *src;
     char *build;

@@ -10,6 +10,7 @@
 #include "wmgr_boilerplate.h"
 #include "wmgr_vect.h"
 #include <stddef.h>
+#include <string.h>
 
 wmgr_def_vect_push_back(1, char *);
 wmgr_def_vect_push_back(2, element_t);
@@ -210,6 +211,8 @@ make_t make(const char *path) {
                         section_type = ms_build;
                     } else if (!strncmp(sv.data, "dependencies", 12)) {
                         section_type = ms_dependencies;
+                    } else if (!strncmp(sv.data, "include", 7)) {
+                        section_type = ms_include;
                     } else break;
 
                     sv.data = buffer + i + 1;
@@ -304,6 +307,9 @@ make_t make(const char *path) {
                         case ms_target:
                             m.targets = section_elements;
                             break;
+                        case ms_include:
+                            m.includes = section_elements;
+                            break;
                         case ms_mod:
                             m.mods = section_elements;
                             break;
@@ -336,6 +342,21 @@ void make_out(make_t m) {
     char *out = (char *)malloc(1E7 * sizeof(char));
     size_t len = 0;
 
+    size_t includes_len = 1;
+    for (size_t i = 0; i < m.includes.size; i++) {
+        includes_len += strlen(m.includes.data[i].obj) + 3;
+    }
+    char *includes = (char *)malloc(includes_len * sizeof(char));
+    if (includes == NULL) {
+        fatal("wmgr: memory error");
+    } includes[0] = '\0';
+    wmgr_vect_foreach(element_t, v, i, m.includes) {
+        strcat(includes, " -I");
+        strcat(includes, v.obj);
+    }
+
+    //printf("includes: %s\n\n", includes);
+
     #if defined(__unix__) || defined(__APPLE__)
     if (m.assets[0] != NULL) {
         len += sprintf(out, "rm -rf %s/%s\ncp -r %s %s/%s\n\n",
@@ -347,8 +368,8 @@ void make_out(make_t m) {
     
     wmgr_vect_foreach(element_t, v, i, m.targets) {
         if (v.format != NULL) {
-            len += sprintf(out + len, "%s %s -f %s\n",
-                m.cc, v.obj, v.format
+            len += sprintf(out + len, "%s %s -f %s%s\n",
+                m.cc, v.obj, v.format, includes
             );
         }
     }
